@@ -1,0 +1,5 @@
+  listen 443 ssl;
+
+  ssl_certificate      <%= @ssl_certificate_file %>;
+  ssl_certificate_key  <%= @ssl_certificate_key_file %>;
+  proxy_set_header X-FORWARDED_PROTO $scheme;

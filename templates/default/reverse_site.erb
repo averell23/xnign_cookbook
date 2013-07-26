@@ -1,0 +1,39 @@
+# Upstream server definition
+upstream <% @name -%> {
+  server localhost:<%= @upstream_port -%> fail_timeout=0;
+}
+
+server {
+  listen 80;
+  <%= render '_listen_ssl.erb' if @use_ssl %>
+
+  <%- if @enforce_ssl -%>
+  if ($scheme = http) {
+    return 301 https://$server_name$request_uri;
+  }
+  <%- end -%>
+
+  client_max_body_size 4G;
+  server_name <%= @hostname -%>;
+  keepalive_timeout 5;
+
+  error_log  <%= node.xnign.log_dir -%>/<%= @hostname -%>.error.log;
+  access_log <%= node.xnign.log_dir -%>/<%= @hostname -%>.access.log;
+
+  proxy_set_header Host $host;
+  proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Real-IP  $remote_addr;
+  proxy_connect_timeout   60;
+  proxy_send_timeout      60;
+  proxy_read_timeout      60;
+  # Only use next upstream on errors, not timeouts
+  proxy_next_upstream error;
+
+  root <%= @doc_root -%>;
+
+  location / {
+    proxy_pass http://<%- @name %>;
+  }
+
+}
+
